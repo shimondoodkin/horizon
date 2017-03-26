@@ -83,7 +83,7 @@ module.exports = function(buildTarget) {
       // Possibility to replace constants such as `if (__DEV__)`
       // and thus strip helpful warnings from production build:
       new DefinePlugin({
-        'process.env.NODE_ENV': (DEV_BUILD ? 'development' : 'production'),
+        'process.env.NODE_ENV': (DEV_BUILD ? '"development"' : '"production"'),
       }),
       new ProvidePlugin({
         Promise: 'es6-promise',

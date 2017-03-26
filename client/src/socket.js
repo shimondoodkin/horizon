@@ -12,6 +12,8 @@ import 'rxjs/add/operator/concat'
 import 'rxjs/add/operator/takeWhile'
 import 'rxjs/add/operator/publish'
 
+import Sockjs from 'sockjs-client'
+
 import { serialize, deserialize } from './serialization.js'
 
 const PROTOCOL_VERSION = 'rethinkdb-horizon-v0'
@@ -58,7 +60,7 @@ export class HorizonSocket extends WebSocketSubject {
     url,              // Full url to connect to
     handshakeMaker, // function that returns handshake to emit
     keepalive = 60,   // seconds between keepalive messages
-    WebSocketCtor = WebSocket,    // optionally provide a WebSocket constructor
+    WebSocketCtor = Sockjs,    // optionally provide a WebSocket constructor
   } = {}) {
     super({
       url,

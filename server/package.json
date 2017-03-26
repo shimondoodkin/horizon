@@ -30,9 +30,12 @@
     "mime-types": "^2.0.4",
     "oauth": "^0.9.14",
     "pem": "^1.8.1",
+    "permessage-deflate": "^0.1.5",
     "rethinkdb": "^2.1.1",
+    "sockjs": "^0.3.18",
     "winston": "^2.1.0",
     "ws": "^1.1.0"
+    "zlib": "^1.0.5"
   },
   "devDependencies": {
     "eslint": "^2.3.0",

@@ -5,7 +5,7 @@ const schemas = require('./schema/horizon_protocol');
 const Request = require('./request').Request;
 
 const Joi = require('joi');
-const websocket = require('ws');
+const sockjs_transport = require('sockjs/lib/transport').Transport;
 
 class Client {
   constructor(socket, server, metadata) {
@@ -25,7 +25,7 @@ class Client {
       this.handle_websocket_error(error));
 
     // The first message should always be the handshake
-    this._socket.once('message', (data) =>
+    this._socket.once('data', (data) =>
       this.error_wrap_socket(() => this.handle_handshake(data)));
 
     if (server._max_connections !== null && server._reql_conn._clients.size >= server._max_connections) {
@@ -107,7 +107,7 @@ class Client {
           responded = true;
           const info = { token: res.token, id: res.payload.id, provider: res.payload.provider };
           this.send_response(request, info);
-          this._socket.on('message', (msg) =>
+          this._socket.on('data', (msg) =>
             this.error_wrap_socket(() => this.handle_request(msg)));
         }
       };
@@ -174,7 +174,7 @@ class Client {
   }
 
   is_open() {
-    return this._socket.readyState === websocket.OPEN;
+    return this._socket.readyState === sockjs_transport.OPEN;
   }
 
   close(info) {
@@ -184,7 +184,7 @@ class Client {
                    `${info.error || 'Unspecified reason.'}`);
       logger.debug(`info: ${JSON.stringify(info)}`);
       if (info.request_id !== undefined) {
-        this._socket.send(JSON.stringify(info));
+        this._socket.write(JSON.stringify(info));
       }
       this._socket.close(1002, close_msg);
     }
@@ -195,7 +195,7 @@ class Client {
     if (this.is_open()) {
       data.request_id = request.request_id;
       logger.debug(`Sending response: ${JSON.stringify(data)}`);
-      this._socket.send(JSON.stringify(data));
+      this._socket.write(JSON.stringify(data));
     }
   }
 

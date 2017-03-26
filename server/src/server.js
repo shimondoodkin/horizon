@@ -7,6 +7,13 @@ const logger = require('./logger');
 const options_schema = require('./schema/server_options').server;
 const getType = require('mime-types').contentType;
 
+const zlib = require('zlib');
+
+const  deflate    = require('permessage-deflate').configure({
+ level: zlib.Z_BEST_COMPRESSION,
+ maxWindowBits: 13
+});
+
 // TODO: dynamically serve different versions of the horizon
 // library. Minified, Rx included etc.
 const horizon_client_path = require.resolve('@horizon/client/dist/horizon');
@@ -27,7 +34,7 @@ const fs = require('fs');
 const Joi = require('joi');
 const path = require('path');
 const url = require('url');
-const websocket = require('ws');
+const sockjs = require('sockjs');
 
 const protocol_name = 'rethinkdb-horizon-v0';
 
@@ -104,15 +111,26 @@ class Server {
         }
       };
 
-      const ws_options = { handleProtocols: accept_protocol,
-                           allowRequest: verify_client,
-                           path: this._path };
+      const ws_options = { //handleProtocols: accept_protocol,
+                           //allowRequest: verify_client,
+                           //path: this._path,
+                           sockjs_url: 'http://cdn.jsdelivr.net/sockjs/1.0.1/sockjs.min.js',
+                           faye_server_options:{ extensions: [deflate] }
+                         };
 
       const add_websocket = (server) => {
-        const ws_server = new websocket.Server(Object.assign({ server }, ws_options))
-        .on('error', (error) => logger.error(`Websocket server error: ${error}`))
-        .on('connection', (socket) => make_client(socket, this));
 
+        const ws_server = sockjs.createServer(ws_options)
+        .on('error', (error) => logger.error(`Websocket server error: ${error}`))
+        .on('connection', (socket) =>
+{
+ verify_client( socket, (good,errcode,errtext)=>
+ {
+  if(!good) return socket.close(errcode,errtext);
+  make_client(socket, this);
+ });
+});
+        ws_server.installHandlers(server, {prefix: this._path});
         this._ws_servers.push(ws_server);
       };
 

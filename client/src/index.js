@@ -10,6 +10,8 @@ import { HorizonSocket } from './socket'
 import { authEndpoint, TokenStorage, clearAuthTokens } from './auth'
 import { aggregate, model } from './model'
 
+import Sockjs from 'sockjs-client'
+
 const defaultHost = typeof window !== 'undefined' && window.location &&
         `${window.location.host}` || 'localhost:8181'
 const defaultSecure = typeof window !== 'undefined' && window.location &&
@@ -22,7 +24,7 @@ function Horizon({
   lazyWrites = false,
   authType = 'unauthenticated',
   keepalive = 60,
-  WebSocketCtor = WebSocket,
+  WebSocketCtor = Sockjs,
 } = {}) {
   // If we're in a redirection from OAuth, store the auth token for
   // this user in localStorage.
@@ -30,7 +32,8 @@ function Horizon({
   const tokenStorage = new TokenStorage({ authType, path })
   tokenStorage.setAuthFromQueryParams()
 
-  const url = `ws${secure ? 's' : ''}:\/\/${host}\/${path}`
+  // const url = `ws${secure ? 's' : ''}:\/\/${host}\/${path}`
+  const url = `http${secure ? 's' : ''}:\/\/${host}\/${path}`
   const socket = new HorizonSocket({
     url,
     handshakeMaker: tokenStorage.handshake.bind(tokenStorage),
@@ -73,7 +76,7 @@ function Horizon({
   // socket experiences an error.
   // Note: Users of the Observable interface shouldn't need this
   horizon.connect = (
-    onError = err => { console.error(`Received an error: ${err}`) }
+    onError = err => { console.error('Received an error: ', err) }
   ) => {
     socket.subscribe(
       () => {},
